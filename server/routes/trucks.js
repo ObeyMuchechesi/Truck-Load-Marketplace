@@ -1,6 +1,7 @@
 const express = require('express');
 const Truck = require('../models/Truck');
 const Load = require('../models/Load');
+const Unlock = require('../models/Unlock');
 const { auth } = require('../middleware/auth');
 const { requireAccess, requireListing } = require('../middleware/plan');
 const matching = require('../services/matching');
@@ -100,7 +101,18 @@ router.get('/match/:loadId', auth('shipper'), async (req, res, next) => {
       limit: Math.min(Number(limit) || 50, 100),
     });
 
-    res.json(trucks.map((t) => matching.sanitizeTruck(t, false)));
+    // Trucks this company already paid to unlock stay unmasked in list results.
+    const companyId = req.user.company?._id || req.user.company;
+    const unlocked = companyId
+      ? await Unlock.find({
+          company: companyId,
+          targetType: 'truck',
+          targetId: { $in: trucks.map((t) => t._id) },
+        }).select('targetId')
+      : [];
+    const unlockedIds = new Set(unlocked.map((u) => String(u.targetId)));
+
+    res.json(trucks.map((t) => matching.sanitizeTruck(t, unlockedIds.has(String(t._id)))));
   } catch (err) {
     next(err);
   }
