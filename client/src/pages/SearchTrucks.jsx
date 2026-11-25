@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { api, errorMessage } from '../api/client';
+import { useAuth } from '../context/AuthContext';
 import PaywallModal, { usePaywall } from '../components/PaywallModal';
 import TruckCard from '../components/TruckCard';
 import { EmptyState, Loader, Notice, PageHeader } from '../components/ui';
@@ -11,6 +12,7 @@ const RADII = [50, 150, 300, 600];
 export default function SearchTrucks() {
   const { loadId } = useParams();
   const paywall = usePaywall();
+  const { refreshSubscription } = useAuth();
   const [load, setLoad] = useState(null);
   const [trucks, setTrucks] = useState([]);
   const [radius, setRadius] = useState(150);
@@ -47,6 +49,8 @@ export default function SearchTrucks() {
     try {
       const { data } = await api.get(`/trucks/${truck._id}`);
       setTrucks((current) => current.map((item) => (item._id === data._id ? data : item)));
+      // Keep the header credit counter in sync with the credit just spent.
+      await refreshSubscription();
     } catch {
       // 402 is handled by the axios interceptor, which opens the paywall.
     } finally {
