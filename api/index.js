@@ -41,11 +41,16 @@ module.exports = async (req, res) => {
   try {
     await connect();
   } catch (err) {
-    console.error('Database unavailable:', err.message);
+    const reason = process.env.MONGODB_URI ? 'CONNECTION_FAILED' : 'MONGODB_URI_MISSING';
+    console.error(`Database unavailable (${reason}):`, err.message);
     res.statusCode = 500;
     res.setHeader('Content-Type', 'application/json');
     return res.end(
-      JSON.stringify({ error: 'DB_UNAVAILABLE', message: 'The database is unreachable right now.' })
+      JSON.stringify({
+        error: 'DB_UNAVAILABLE',
+        reason,
+        message: 'The database is unreachable right now.',
+      })
     );
   }
 

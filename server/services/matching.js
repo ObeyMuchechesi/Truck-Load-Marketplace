@@ -19,6 +19,7 @@ const sanitizeTruck = (truck, unlocked = false) => {
   t.distanceKm =
     typeof t.distanceMeters === 'number' ? +(t.distanceMeters / 1000).toFixed(1) : undefined;
   delete t.distanceMeters;
+  delete t.geo;
 
   const city = t.currentLocation?.city || null;
 
