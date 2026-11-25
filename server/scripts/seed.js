@@ -47,6 +47,7 @@ const upsertTruck = (company, plateNumber, data) =>
           city: data.city,
           coordinates: CITIES[data.city],
         },
+        geo: { type: 'Point', coordinates: CITIES[data.city] },
       },
     },
     { upsert: true, new: true, setDefaultsOnInsert: true }
